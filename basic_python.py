@@ -1,4 +1,5 @@
 import requests
+import json
 from bs4 import BeautifulSoup
 
 def main():
@@ -11,19 +12,21 @@ def main():
         )
     }
     response = requests.get(url, headers=headers)
+
+    # save response to text
+    # with open('imdb.html', 'w') as file:
+    #     file.write(response.text)
+
     soup = BeautifulSoup(response.text, 'html.parser')
     
-    movies = soup.select('td.titleColumn')
-    years = soup.select('span.secondaryInfo')
-    print("DEBUG", movies)
-    top_25 = []
-    for i in range(25):
-        movie = movies[i].a.text
-        year = years[i].text.strip('()')
-        top_25.append((movie, year))
-    
-    for i, (movie, year) in enumerate(top_25, start=1):
-        print(f"{i}. {movie} ({year})")
+    json_ld_script = soup.find("script", type="application/ld+json")
+    data = json.loads(json_ld_script.string)
+
+    items = data.get('itemListElement')
+
+    for i, item in enumerate(items[:25]):
+        item_name = item.get('item').get('name')
+        print(str(i + 1) + " " + item_name)
 
 if __name__ == "__main__":
     main()
